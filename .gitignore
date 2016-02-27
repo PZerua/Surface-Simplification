@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.obj
+!/Surface-Simplification/data/*
 
 # Precompiled Headers
 *.gch
@@ -31,4 +32,10 @@
 *.opendb
 /.vs
 /Debug
-/Lab2_2010/Debug
+/Release
+/x86
+/x64
+/Surface-Simplification/Debug
+/Surface-Simplification/Release
+/Surface-Simplification/x86
+/Surface-Simplification/x64
