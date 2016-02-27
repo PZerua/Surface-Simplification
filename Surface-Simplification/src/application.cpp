@@ -112,7 +112,10 @@ void Application::update(double seconds_elapsed)
 	{
 		model_matrix.traslateLocal(0, 0, -1);
 	}
-
+	if (keystate[SDL_SCANCODE_I])
+	{
+		light.set(light.x, light.y + 1, light.z);
+	}
 	if (keystate[SDL_SCANCODE_K])
 	{
 		light.set(light.x, light.y - 1, light.z);
