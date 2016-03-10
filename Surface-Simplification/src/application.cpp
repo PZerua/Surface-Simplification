@@ -168,17 +168,7 @@ void Application::update(double seconds_elapsed)
 	{
 		light.set(light.x, light.y, light.z + 1);
 	}
-	if (keystate[SDL_SCANCODE_Z])
-	{
-		GLint previous[2];
-		glGetIntegerv(GL_POLYGON_MODE, previous);
-		if (previous[1] == GL_FILL)  {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		else {
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
-	}
+	
 
 }
 
@@ -188,6 +178,18 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 	switch(event.keysym.sym)
 	{
 		case SDLK_ESCAPE: exit(0); break; //ESC key, kill the app
+		case SDLK_z:
+			if (event.type == SDL_KEYUP) {
+				GLint previous[2];
+				glGetIntegerv(GL_POLYGON_MODE, previous);
+				if (previous[1] == GL_FILL) {
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				}
+				else {
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				}
+			}
+			break;
 	}
 }
 
