@@ -126,16 +126,6 @@ void Application::update(double seconds_elapsed)
 	{
 		model_matrix.traslateLocal(0, -1, 0);
 	}
-	/*
-	if (keystate[SDL_SCANCODE_W])
-	{
-		model_matrix.traslateLocal(0, 0, 1);
-	}
-	if (keystate[SDL_SCANCODE_S])
-	{
-		model_matrix.traslateLocal(0, 0, -1);
-	}
-	*/
 	if (keystate[SDL_SCANCODE_KP_PLUS])
 	{
 		model_matrix.traslateLocal(0, 0, 1);
@@ -190,14 +180,18 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 				}
 			}
 			break;
-		/*case SDLK_1:
-			if (event.type == SDL_KEYUP)
+		case SDLK_1:
+			if (event.type == SDL_KEYUP){
+				mesh->clear();
 				mesh->loadOBJ("data/lee.obj");
+			}
 			break;
 		case SDLK_2:
-			if (event.type == SDL_KEYUP)
+			if (event.type == SDL_KEYUP){
+				mesh->clear();
 				mesh->loadOBJ("data/man.obj");
-			break;*/
+			}
+			break;
 	}
 }
 
