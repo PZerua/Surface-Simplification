@@ -43,6 +43,7 @@ void Application::init(void)
 	//then we load a mesh
 	mesh = new Mesh();
 	mesh->loadOBJ("data/lee.obj");
+	mesh->createTrianglePlanes();
 
 	//we load a shader
 	phong = new Shader();

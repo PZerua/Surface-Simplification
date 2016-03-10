@@ -21,6 +21,51 @@ void Mesh::clear()
 	uvs.clear();
 }
 
+void Mesh::createTrianglePlanes()
+{
+	std::cout << vertices[0].x << ", " << vertices[0].y << ", " << vertices[0].z << std::endl;
+	std::cout << vertices[1].x << ", " << vertices[1].y << ", " << vertices[1].z << std::endl;
+	std::cout << vertices[2].x << ", " << vertices[2].y << ", " << vertices[2].z << std::endl;
+
+	for (unsigned i = 0; i < vertices.size(); i += 3)
+	{
+		Vector3 AB(vertices[i + 1].x - vertices[i].x, vertices[i + 1].y - vertices[i].y, vertices[i + 1].z - vertices[i].z);
+		Vector3 BC(vertices[i + 2].x - vertices[i + 1].x, vertices[i + 2].y - vertices[i + 1].y, vertices[i + 2].z - vertices[i + 1].z);
+
+		Vector3 normal = AB.cross(BC);
+		normal.normalize();
+
+		float D(- (vertices[i].x * normal.x) - (vertices[i].y * normal.y) - (vertices[i].z * normal.z));
+
+		Matrix44 K;
+
+		K.M[0][0] = normal.x * normal.x;
+		K.M[0][1] = normal.x * normal.y;
+		K.M[0][2] = normal.x * normal.z;
+		K.M[0][3] = normal.x * D;
+		K.M[1][0] = normal.x * normal.y;
+		K.M[2][0] = normal.x * normal.z;
+		K.M[3][0] = normal.x * D;
+
+		K.M[1][1] = normal.y * normal.y;
+		K.M[1][2] = normal.y * normal.z;
+		K.M[1][3] = normal.y * D;
+		K.M[2][1] = normal.y * normal.z;
+		K.M[3][1] = normal.y * D;
+
+		K.M[2][2] = normal.z * normal.z;
+		K.M[2][3] = normal.z * D;
+		K.M[3][2] = normal.z * D;
+
+		K.M[3][3] = D * D;
+
+		triangPlanes.push_back(K);
+	}
+
+
+
+}
+
 void Mesh::render(int primitive)
 {
 	//render the mesh using your rasterizer
@@ -169,9 +214,11 @@ bool Mesh::loadOBJ(const char* filename)
 				v2 = parseVector3( tokens[iPoly].c_str(), '/' );
 				v3 = parseVector3( tokens[iPoly+1].c_str(), '/' );
 
-				vertices.push_back( indexed_positions[ unsigned int(v1.x) -1 ] );
+				vertices.push_back( indexed_positions[ unsigned int(v1.x) -1] );
 				vertices.push_back( indexed_positions[ unsigned int(v2.x) -1] );
 				vertices.push_back( indexed_positions[ unsigned int(v3.x) -1] );
+
+
 				//triangles.push_back( VECTOR_INDICES_TYPE(vertex_i, vertex_i+1, vertex_i+2) ); //not needed
 				vertex_i += 3;
 

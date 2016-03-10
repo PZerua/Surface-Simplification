@@ -14,10 +14,12 @@ public:
 	std::vector< Vector3 > vertices; //here we store the vertices
 	std::vector< Vector3 > normals;	 //here we store the normals
 	std::vector< Vector2 > uvs;	 //here we store the texture coordinates
+	std::vector< Matrix44 > triangPlanes;
 
 	Mesh();
 	void clear();
 	void render(int primitive); //TODO
+	void createTrianglePlanes();
 
 	void createPlane(float size);
 	bool loadOBJ(const char* filename);
