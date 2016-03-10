@@ -190,6 +190,14 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 				}
 			}
 			break;
+		/*case SDLK_1:
+			if (event.type == SDL_KEYUP)
+				mesh->loadOBJ("data/lee.obj");
+			break;
+		case SDLK_2:
+			if (event.type == SDL_KEYUP)
+				mesh->loadOBJ("data/man.obj");
+			break;*/
 	}
 }
 
