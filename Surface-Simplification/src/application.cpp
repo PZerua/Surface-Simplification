@@ -84,9 +84,31 @@ void Application::render(void)
 //called after render
 void Application::update(double seconds_elapsed)
 {
+
+	//Aquí vendrà el switch
+
+
+	/*
 	if (keystate[SDL_SCANCODE_SPACE])
 	{
 		model_matrix.rotateLocal(seconds_elapsed, Vector3(0,1,0));
+	}
+	*/
+	if (keystate[SDL_SCANCODE_W])
+	{
+		model_matrix.rotateLocal(seconds_elapsed, Vector3(1, 0, 0));
+	}
+	if (keystate[SDL_SCANCODE_A])
+	{
+		model_matrix.rotateLocal(seconds_elapsed, Vector3(0, 1, 0));
+	}
+	if (keystate[SDL_SCANCODE_S])
+	{
+		model_matrix.rotateLocal(seconds_elapsed, Vector3(-1, 0, 0));
+	}
+	if (keystate[SDL_SCANCODE_D])
+	{
+		model_matrix.rotateLocal(seconds_elapsed, Vector3(0, -1, 0));
 	}
 	if (keystate[SDL_SCANCODE_RIGHT])
 	{
@@ -104,11 +126,21 @@ void Application::update(double seconds_elapsed)
 	{
 		model_matrix.traslateLocal(0, -1, 0);
 	}
+	/*
 	if (keystate[SDL_SCANCODE_W])
 	{
 		model_matrix.traslateLocal(0, 0, 1);
 	}
 	if (keystate[SDL_SCANCODE_S])
+	{
+		model_matrix.traslateLocal(0, 0, -1);
+	}
+	*/
+	if (keystate[SDL_SCANCODE_KP_PLUS])
+	{
+		model_matrix.traslateLocal(0, 0, 1);
+	}
+	if (keystate[SDL_SCANCODE_KP_MINUS])
 	{
 		model_matrix.traslateLocal(0, 0, -1);
 	}
@@ -135,6 +167,17 @@ void Application::update(double seconds_elapsed)
 	if (keystate[SDL_SCANCODE_U])
 	{
 		light.set(light.x, light.y, light.z + 1);
+	}
+	if (keystate[SDL_SCANCODE_Z])
+	{
+		GLint previous[2];
+		glGetIntegerv(GL_POLYGON_MODE, previous);
+		if (previous[1] == GL_FILL)  {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
+		else {
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 	}
 
 }
