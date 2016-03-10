@@ -157,6 +157,7 @@ Vector3 operator * (const Matrix44& matrix, const Vector3& v);
 Vector3 operator + (const Vector3& a, const Vector3& b);
 Vector3 operator - (const Vector3& a, const Vector3& b);
 Vector3 operator * (const Vector3& a, float v);
+bool operator == (const Vector3& a, const Vector3& b);
 
 class Vector2
 {
