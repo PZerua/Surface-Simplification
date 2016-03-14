@@ -90,6 +90,29 @@ public:
 	float dot( const Vector3& v ) const;
 };
 
+
+class Vector4
+{
+public:
+	union
+	{
+		struct { float x, y, z, w; };
+		float v[4];
+	};
+
+	Vector4() { x = y = z = w = 0.0f; }
+	Vector4(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+
+	void set(float x, float y, float z, float w) { this->x = x; this->y = y; this->z = z; this->w = w; }
+
+	double length();
+	double length() const;
+	Vector4& normalize();
+
+	float dot(const Vector4& v) const;
+};
+
+
 //****************************
 //Matrix44 class
 class Matrix44
@@ -149,6 +172,9 @@ class Matrix44
 		bool getXYZ(float* euler) const;
 
 		Matrix44 operator * (const Matrix44& matrix) const;
+		Matrix44 operator + (const Matrix44& matrix) const;
+
+		void print();
 };
 
 //Operators, they are our friends
@@ -194,7 +220,6 @@ Vector2 operator - (const Vector2& a, const Vector2& b);
 inline float distance(const Vector2& a, const Vector2& b) { return (float)(a-b).length(); }
 inline float distance(float x, float y, float x2, float y2) { return sqrtf( (x-x2)*(x-x2) + (y-y2)*(y-y2)); }
 
-
 class Vector3u
 {
 public:
@@ -225,5 +250,36 @@ inline Vector3u operator * (float v, const Vector3u& c) { return Vector3u((unsig
 float ComputeSignedAngle( Vector2 a, Vector2 b);
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
 
+class triangle
+{
+public:
+	triangle(const unsigned i, const unsigned j, const unsigned k);
+	union
+	{
+		struct { unsigned int i, j, k; };
+		struct { unsigned int  v[3]; };
+	};
+
+	Matrix44 K;
+
+};
+
+class Edge
+{
+public:
+	Edge();
+	Edge(const unsigned &a, const unsigned &b);
+	bool operator==(const Edge& p);
+	unsigned int a;
+	unsigned int b;
+	Matrix44 Q;
+	Vector3 w;
+	float cost;
+
+};
+
+
+Vector4 multV4xM4(const Vector4 &v, const Matrix44 &m);
+Vector4 multM4xV4(const Matrix44 &m, const Vector4 &v);
 
 #endif

@@ -289,6 +289,22 @@ Matrix44 Matrix44::operator*(const Matrix44& matrix) const
 	return ret;
 }
 
+Matrix44 Matrix44::operator+(const Matrix44& matrix) const
+{
+	Matrix44 ret;
+
+	unsigned int i, j;
+	for (i = 0; i<4; i++)
+	{
+		for (j = 0; j<4; j++)
+		{
+			ret.M[i][j] = M[i][j] + matrix.M[i][j];
+		}
+	}
+
+	return ret;
+}
+
 //it allows to add two vectors
 Vector3 operator + (const Vector3& a, const Vector3& b) 
 {
@@ -357,6 +373,19 @@ void Matrix44::setUpAndOrthonormalize(Vector3 up)
 	m[0] = right.x;
 	m[1] = right.y;
 	m[2] = right.z;
+}
+
+void Matrix44::print()
+{
+	for (unsigned i = 0; i < 4; i++)
+	{
+		for (unsigned j = 0; j < 4; j++)
+		{
+			std::cout << M[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
 }
 
 void Matrix44::setFrontAndOrthonormalize(Vector3 front)
@@ -483,4 +512,97 @@ Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal
     double denom = plane_normal.dot(ray_dir);
     double t = -(numer / denom);
 	return ray_origin + ray_dir * t;
+}
+
+triangle::triangle(const unsigned i, const unsigned j, const unsigned k)
+{
+	this->i = i;
+	this->j = j;
+	this->k = k;
+}
+
+double Vector4::length()
+{
+	return sqrt(x*x + y*y + z*z + w*w);
+}
+
+double Vector4::length() const
+{
+	return sqrt(x*x + y*y + z*z + w*w);
+}
+
+Vector4& Vector4::normalize()
+{
+	double len = length();
+	x /= len;
+	y /= len;
+	z /= len;
+	return *this;
+}
+
+float Vector4::dot(const Vector4& v) const
+{
+	return x*v.x + y*v.y + z*v.z + w*v.w;
+}
+
+Vector4 multM4xV4(const Matrix44 &m, const Vector4 &v)
+{
+	Vector4 ret;
+	for (int i = 0; i < 4; i++) 
+	{
+		for (int j = 0; j < 4; j++) 
+		{
+			ret.v[i] += (m.M[i][j] * v.v[j]);
+		}
+	}
+	return ret;
+}
+
+Vector4 multV4xM4(const Vector4 &v, const Matrix44 &m) 
+{
+	Vector4 ret;
+
+	Vector4 x(m.M[0][0], m.M[1][0], m.M[2][0], m.M[3][0]);
+	Vector4 y(m.M[0][1], m.M[1][1], m.M[2][1], m.M[3][1]);
+	Vector4 z(m.M[0][2], m.M[1][2], m.M[2][2], m.M[3][2]);
+	Vector4 w(m.M[0][3], m.M[1][3], m.M[2][3], m.M[3][3]);
+
+	ret.x = x.dot(v);
+	ret.y = y.dot(v);
+	ret.z = z.dot(v);
+	ret.w = w.dot(v);
+	return ret;
+}
+
+
+Edge::Edge()
+{
+	a = -1;
+	b = -1;
+	cost = 0;
+}
+
+Edge::Edge(const unsigned &a, const unsigned &b)
+{
+	this->a = a;
+	this->b = b;
+}
+
+
+bool Edge::operator==(const Edge& p)
+{
+	if (a == p.a)
+		if (b == p.b)
+			return true;
+	if (a == p.b)
+		if (b == p.a)
+			return true;
+	return false;
+}
+
+bool operator==(const Vector3& a, const Vector3& b)
+{
+	if (a.x == b.x && a.y == b.y && a.z == b.z)
+		return true;
+	else return false;
 }

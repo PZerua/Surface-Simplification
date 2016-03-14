@@ -10,22 +10,6 @@ Mesh* mesh = NULL;
 Matrix44 model_matrix;
 Shader* phong = NULL;
 
-struct customVec3Comparator {
-    bool operator()(const Vector3& a, const Vector3& b) const {
-        return ((a.x < b.x) || (a.y < b.y) || (a.z < b.z));
-    }
-};
-
-void drawString(int x, int y, const char* string)
-{
-	int i, len;
-	glColor3f(0,0,0);
-	glRasterPos2f(x, y);
-	len = strlen (string);
-	for (i=0;i<len;i++)
-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_10, string[i]);
-}
-
 Application::Application(const char* caption, int width, int height)
 {
 	this->window = createWindow(caption, width, height);
@@ -70,7 +54,11 @@ void Application::init(void)
 	//then we load a mesh
 	mesh = new Mesh();
 	mesh->loadOBJ("data/lee.obj");
-	mesh->createTrianglePlanes();
+	mesh->calculateCost();
+	mesh->edgeContraction();
+	/*mesh->edgeContraction();
+	mesh->edgeContraction();
+	mesh->edgeContraction();*/
 
 	//we load a shader
 	phong = new Shader();
@@ -101,8 +89,6 @@ void Application::render(void)
 	phong->setVector3("ambientColor", ambientColor);
 	phong->setVector3("diffuseColor", diffuseColor);
 	//render the data
-	drawString(0, 0, "Number of triangles: 0");
-	//drawString(10, 20, "Number of vertices: 0");
 	mesh->render(GL_TRIANGLES);
 	//disable render
 	phong->disable();
