@@ -270,6 +270,7 @@ public:
 	Edge();
 	Edge(const unsigned &a, const unsigned &b);
 	bool operator==(const Edge& p);
+	bool contains(const unsigned int &value) const;
 	unsigned int a;
 	unsigned int b;
 	Matrix44 Q;

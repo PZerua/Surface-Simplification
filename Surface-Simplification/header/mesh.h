@@ -41,9 +41,13 @@ public:
 	std::vector< Vector2 > uvs;	 //here we store the texture coordinates
 	std::map<Vector3, vector< Matrix44 >, customVec3Comparator> vertexPlane;
 	std::map<Vector3, Matrix44, customVec3Comparator> vertexQ;
-	std::vector< unsigned > trianglesT;
+	std::vector< unsigned int > trianglesT;
 	vector < Edge > edges;
 	priority_queue <Edge, vector<Edge>, LessCost> edgeQueue;
+
+	std::vector<Vector3> indexed_positions;
+	std::vector<Vector3> indexed_normals;
+	std::vector<Vector2> indexed_uvs;
 
 	Mesh();
 	void clear();

@@ -9,10 +9,6 @@ std::vector<std::string> tokenize(const std::string& source, const char* delimit
 Vector2 parseVector2(const char* text);
 Vector3 parseVector3(const char* text, const char separator);
 
-std::vector<Vector3> indexed_positions;
-std::vector<Vector3> indexed_normals;
-std::vector<Vector2> indexed_uvs;
-
 
 Mesh::Mesh()
 {
@@ -20,6 +16,8 @@ Mesh::Mesh()
 
 void Mesh::clear()
 {
+	indexed_normals.clear();
+	indexed_positions.clear();
 	vertices.clear();
 	normals.clear();
 	uvs.clear();
@@ -28,12 +26,12 @@ void Mesh::clear()
 void Mesh::render(int primitive)
 {
 	//render the mesh using your rasterizer
-	assert(vertices.size() && "No vertices in this mesh");
+	assert(indexed_positions.size() && "No vertices in this mesh");
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, &indexed_positions[0]);
 
-	if (normals.size())
+	if (indexed_normals.size())
 	{
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, 0, &indexed_normals[0] );
@@ -43,10 +41,9 @@ void Mesh::render(int primitive)
 	glDrawElements(primitive, trianglesT.size(), GL_UNSIGNED_INT, &trianglesT[0]);
 	glDisableClientState(GL_VERTEX_ARRAY);
 
-	if (normals.size())
+	if (indexed_normals.size())
 		glDisableClientState(GL_NORMAL_ARRAY);
-	if (uvs.size())
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
 }
 
 void Mesh::createPlane(float size)
@@ -329,53 +326,8 @@ Vector3 parseVector3(const char* text, const char separator)
 	return result;
 };
 
-void Mesh::calculateCost()
-{
-
-	for (std::map<Vector3, vector<Matrix44>>::iterator it = vertexPlane.begin(); it != vertexPlane.end(); it++)
-	{
-		Matrix44 temp = it->second[0];
-		for (unsigned i = 1; i < it->second.size(); i++)
-		{
-			temp = temp + it->second[i];
-		}
-		vertexQ[it->first] = temp;
-	}
-
-	for (unsigned i = 0; i < edges.size(); i++)
-	{
-		edges[i].Q = vertexQ[indexed_positions[edges[i].a]] + vertexQ[indexed_positions[edges[i].b]];
-
-		Matrix44 temp = edges[i].Q;
-		temp.M[3][0] = 0;
-		temp.M[3][1] = 0;
-		temp.M[3][2] = 0;
-		temp.M[3][3] = 1;
-
-		temp.inverse();
-
-		Vector4 temp2(0, 0, 0, 1);
-
-		Vector4 tempW = multM4xV4(temp , temp2);
-
-		edges[i].w = Vector3(tempW.x, tempW.y, tempW.z);
-
-		Vector4 wQ = multV4xM4(tempW, edges[i].Q);
-
-		edges[i].cost = wQ.dot(tempW);
-
-		edgeQueue.push(edges[i]);
-	}
-	
-}
-
-
 void Mesh::createTrianglePlanes(Vector3 &a, Vector3 &b, Vector3 &c)
 {
-	/*std::cout << a.x << ", " << a.y << ", " << a.z << std::endl;
-	std::cout << b.x << ", " << b.y << ", " << b.z << std::endl;
-	std::cout << c.x << ", " << c.y << ", " << c.z << std::endl;*/
-
 	Vector3 AB(b.x - a.x, b.y - a.y, b.z - a.z);
 	Vector3 BC(c.x - b.x, c.y - b.y, c.z - b.z);
 
@@ -423,56 +375,158 @@ void Mesh::createTrianglePlanes(Vector3 &a, Vector3 &b, Vector3 &c)
 
 }
 
+void Mesh::calculateCost()
+{
+	for (std::map<Vector3, vector<Matrix44>>::iterator it = vertexPlane.begin(); it != vertexPlane.end(); it++)
+	{
+		Matrix44 temp = it->second[0];
+		for (unsigned i = 1; i < it->second.size(); i++)
+		{
+			temp = temp + it->second[i];
+		}
+		vertexQ[it->first] = temp;
+	}
+
+	for (unsigned i = 0; i < edges.size(); i++)
+	{
+		edges[i].Q = vertexQ[indexed_positions[edges[i].a]] + vertexQ[indexed_positions[edges[i].b]];
+
+		Matrix44 temp = edges[i].Q;
+		temp.M[3][0] = 0;
+		temp.M[3][1] = 0;
+		temp.M[3][2] = 0;
+		temp.M[3][3] = 1;
+
+		temp.inverse();
+
+		Vector4 temp2(0, 0, 0, 1);
+
+		Vector4 tempW = multM4xV4(temp, temp2);
+
+		edges[i].w = Vector3(tempW.x, tempW.y, tempW.z);
+
+		Vector4 wQ = multV4xM4(tempW, edges[i].Q);
+
+		edges[i].cost = wQ.dot(tempW);
+
+		edgeQueue.push(edges[i]);
+	}
+}
+
 void Mesh::edgeContraction()
 {
-	for (unsigned i = 0; i < edgeQueue.size(); i++)
+	vector <unsigned int> erasedIndices;
+	vector <Edge> erasedEdges;
+	int count = 0;
+
+	while (count < 60)
 	{
-		// TODO : Delete v2 and recalculate adjacent edges cost
+		bool skip = false;
+		unsigned topA = edgeQueue.top().a;
+		unsigned topB = edgeQueue.top().b;
+		Edge temp = Edge(topA, topB);
 
-		indexed_positions[edgeQueue.top().a] = edgeQueue.top().w;
+		//cout << "original: " << topA << " , " << topB << endl;
+		for (unsigned i = 0; i < erasedIndices.size(); i++)
+		{
+			if (topA > erasedIndices[i])
+				topA--;
+			if (topB > erasedIndices[i])
+				topB--;
+			if (temp == erasedEdges[i])
+			{
+				skip = true;
+			}
+		}
+		//cout << "updated: " << topA << " , " << topB << endl;
+
+		if (topB == topA)
+			skip = true;
 		
-		auto it = indexed_positions.begin();
-		while (it != indexed_positions.end())
+		if (!skip)
 		{
-			if (*it == indexed_positions[edgeQueue.top().b])
+
+			// Changing the vertex v1 to w
+			indexed_positions[topA] = edgeQueue.top().w;
+
+			erasedIndices.push_back(topB);
+			erasedEdges.push_back(edgeQueue.top());
+			// Delete v2 from vertices and normal vectors
+			indexed_positions.erase(indexed_positions.begin() + topB);
+			indexed_normals.erase(indexed_normals.begin() + topB);
+		
+			//cout << trianglesT.size() << endl;
+
+			int triangErased = 0;
+
+			// Replace edges that contained v2 with v1 and delete the triangles that contained edge v1 - v2
+			for (unsigned i = 0; i < (trianglesT.size() - 3*triangErased); i += 3)
 			{
-				indexed_positions.erase(it);
-				break;
-			}
-			it++;
-		}
+				Edge a(trianglesT[i], trianglesT[i + 1]);
+				Edge b(trianglesT[i + 1], trianglesT[i + 2]);
+				Edge c(trianglesT[i + 2], trianglesT[i]);
 
-		auto it2 = trianglesT.begin();
-		int count = 0;
-		while (it2 != trianglesT.end())
-		{
-			if (count == 3)
-				count = 0;
-			if (*it2 == edgeQueue.top().b)
+				if (!(a == edgeQueue.top()))
+				{
+					if (edgeQueue.top().contains(a.a))
+					{
+						trianglesT[i] = topA;
+					}
+					else if (edgeQueue.top().contains(a.b))
+					{
+						trianglesT[i + 1] = topA;
+					}
+					a = Edge(trianglesT[i], trianglesT[i + 1]);
+					b = Edge(trianglesT[i + 1], trianglesT[i + 2]);
+					c = Edge(trianglesT[i + 2], trianglesT[i]);
+				}
+				if (!(b == edgeQueue.top()))
+				{
+					if (edgeQueue.top().contains(b.a))
+					{
+						trianglesT[i + 1] = topA;
+					}
+					else if (edgeQueue.top().contains(b.b))
+					{
+						trianglesT[i + 2] = topA;
+					}
+					a = Edge(trianglesT[i], trianglesT[i + 1]);
+					b = Edge(trianglesT[i + 1], trianglesT[i + 2]);
+					c = Edge(trianglesT[i + 2], trianglesT[i]);
+				}
+				if (!(c == edgeQueue.top()))
+				{
+					if (edgeQueue.top().contains(c.a))
+					{
+						trianglesT[i + 2] = topA;
+					}
+					else if (edgeQueue.top().contains(c.b))
+					{
+						trianglesT[i] = topA;
+					}
+					a = Edge(trianglesT[i], trianglesT[i + 1]);
+					b = Edge(trianglesT[i + 1], trianglesT[i + 2]);
+					c = Edge(trianglesT[i + 2], trianglesT[i]);
+				}
+
+				if (a == edgeQueue.top() || b == edgeQueue.top() || c == edgeQueue.top())
+				{
+					trianglesT.erase(trianglesT.begin() + i);
+					trianglesT.erase(trianglesT.begin() + i + 1);
+					trianglesT.erase(trianglesT.begin() + i + 2);
+					triangErased++;
+				}
+			}
+			//cout << trianglesT.size() << endl;
+
+			// Since we have deleted a vertex from indexed_positions, now the indices have changed
+			for (unsigned i = 0; i < trianglesT.size(); i++)
 			{
-				it2 = trianglesT.erase(it2);
-
-				if (count == 0)
-				{
-					it2 = trianglesT.erase(it2 + 1);
-					it2 = trianglesT.erase(it2 + 2);
-				}
-				else if (count == 1)
-				{
-					it2 = trianglesT.erase(it2 - 1);
-					it2 = trianglesT.erase(it2 + 1);
-				}
-				else if (count == 2)
-				{
-					it2 = trianglesT.erase(it2 - 1);
-					it2 = trianglesT.erase(it2 - 2);
-				}
-				break;
+				if (trianglesT[i] > topB)
+					trianglesT[i] -= 1;
 			}
-			it2++;
-			count++;
 		}
-
 		edgeQueue.pop();
+		count++;
 	}
 }

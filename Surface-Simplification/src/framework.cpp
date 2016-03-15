@@ -600,6 +600,13 @@ bool Edge::operator==(const Edge& p)
 	return false;
 }
 
+bool Edge::contains(const unsigned int &value) const
+{
+	if (a == value || b == value)
+		return true;
+	else return false;
+}
+
 bool operator==(const Vector3& a, const Vector3& b)
 {
 	if (a.x == b.x && a.y == b.y && a.z == b.z)

@@ -53,9 +53,9 @@ void Application::init(void)
 
 	//then we load a mesh
 	mesh = new Mesh();
-	mesh->loadOBJ("data/lee.obj");
+	mesh->loadOBJ("data/sphere.obj");
 	mesh->calculateCost();
-	mesh->edgeContraction();
+	//mesh->edgeContraction();
 	/*mesh->edgeContraction();
 	mesh->edgeContraction();
 	mesh->edgeContraction();*/
@@ -164,7 +164,6 @@ void Application::update(double seconds_elapsed)
 	{
 		light.set(light.x, light.y, light.z + 1);
 	}
-	
 
 }
 
@@ -175,11 +174,12 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 	switch(event.keysym.sym)
 	{
 		case SDLK_ESCAPE: exit(0); break; //ESC key, kill the app
-		case SDLK_j:
+		case SDLK_m:
 			if (event.type == SDL_KEYUP){
-				printf ("Enter desired number of triangles: ");
+				/*printf ("Enter desired number of triangles: ");
 				scanf ("%d", &t_count);
-				printf ("Triangles: %d", t_count);
+				printf ("Triangles: %d", t_count);*/
+				mesh->edgeContraction();
 				//TODO: execute surface simplification method
 			}
 			break;
