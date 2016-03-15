@@ -23,17 +23,6 @@ Application::Application(const char* caption, int width, int height)
 	this->window_width = w;
 	this->window_height = h;
 	this->keystate = SDL_GetKeyboardState(NULL);
-
-	Vector3 v1(0,0,0);
-	Vector3 v2(0,0,0);
-	Vector3 v3(1,2,3);
-
-	std::map<Vector3, int, customVec3Comparator> map;
-	map[v1] = 1;
-	map[v2] = 2;
-	map[v3] = 4;
-
-	std::cout << "Map size: " << map.size() << std::endl;
 }
 
 //Here we have already GL working, so we can create meshes and textures
@@ -53,7 +42,7 @@ void Application::init(void)
 
 	//then we load a mesh
 	mesh = new Mesh();
-	mesh->loadOBJ("data/sphere.obj");
+	mesh->loadOBJ("data/lee.obj");
 	mesh->calculateCost();
 	//mesh->edgeContraction();
 	/*mesh->edgeContraction();
@@ -179,7 +168,7 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 				/*printf ("Enter desired number of triangles: ");
 				scanf ("%d", &t_count);
 				printf ("Triangles: %d", t_count);*/
-				mesh->edgeContraction();
+				mesh->edgeContraction(5);
 				//TODO: execute surface simplification method
 			}
 			break;

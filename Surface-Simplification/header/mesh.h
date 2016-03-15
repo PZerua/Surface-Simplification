@@ -29,34 +29,31 @@ struct LessCost
 {
 	bool operator()(const Edge& a, const Edge& b) const
 	{
-		return a.cost > b.cost;
+		return a.cost < b.cost;
 	}
 };
 
 class Mesh
 {
 public:
-	std::vector< Vector3 > vertices; //here we store the vertices
-	std::vector< Vector3 > normals;	 //here we store the normals
-	std::vector< Vector2 > uvs;	 //here we store the texture coordinates
-	std::map<Vector3, vector< Matrix44 >, customVec3Comparator> vertexPlane;
+	std::map<Vector3, vector<unsigned int>, customVec3Comparator> vertexTriangles;
 	std::map<Vector3, Matrix44, customVec3Comparator> vertexQ;
-	std::vector< unsigned int > trianglesT;
-	vector < Edge > edges;
-	priority_queue <Edge, vector<Edge>, LessCost> edgeQueue;
+	vector<Edge> edges;
 
 	std::vector<Vector3> indexed_positions;
 	std::vector<Vector3> indexed_normals;
 	std::vector<Vector2> indexed_uvs;
+	std::vector<Triangle> triangles;
 
 	Mesh();
 	void clear();
-	void render(int primitive); //TODO
-	void createTrianglePlanes(Vector3 &a, Vector3 &b, Vector3 &c);
-	void calculateCost();
-	void edgeContraction();
+	void render(int primitive);
 
-	void createPlane(float size);
+	Matrix44 getTriangleMatrix(unsigned int tri);
+	Matrix44 getTriangleVectorMatrix(std::vector<unsigned int> triangles);
+
+	void calculateCost();
+	void edgeContraction(unsigned int removeCount);
 	bool loadOBJ(const char* filename);
 };
 

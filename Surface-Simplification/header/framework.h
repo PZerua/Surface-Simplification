@@ -250,18 +250,15 @@ inline Vector3u operator * (float v, const Vector3u& c) { return Vector3u((unsig
 float ComputeSignedAngle( Vector2 a, Vector2 b);
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
 
-class triangle
+class Triangle
 {
 public:
-	triangle(const unsigned i, const unsigned j, const unsigned k);
-	union
-	{
-		struct { unsigned int i, j, k; };
-		struct { unsigned int  v[3]; };
-	};
+	Triangle(unsigned int i, unsigned int j, unsigned int k);
 
-	Matrix44 K;
-
+	unsigned int i,j,k;
+	
+	bool containsIndex(unsigned int a);
+	bool containsIndices(unsigned int a, unsigned int b);
 };
 
 class Edge
@@ -275,7 +272,7 @@ public:
 	unsigned int b;
 	Matrix44 Q;
 	Vector3 w;
-	float cost;
+	double cost;
 
 };
 

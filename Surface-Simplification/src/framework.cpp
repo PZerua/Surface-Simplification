@@ -514,11 +514,21 @@ Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal
 	return ray_origin + ray_dir * t;
 }
 
-triangle::triangle(const unsigned i, const unsigned j, const unsigned k)
+Triangle::Triangle(unsigned int i, unsigned int j, unsigned int k)
 {
 	this->i = i;
 	this->j = j;
 	this->k = k;
+}
+
+bool Triangle::containsIndex(unsigned int a)
+{
+	return ((this->i == a) || (this->j == a) || (this->k == a));
+}
+
+bool Triangle::containsIndices(unsigned int a, unsigned int b)
+{
+	return this->containsIndex(a) && this->containsIndex(b);
 }
 
 double Vector4::length()
