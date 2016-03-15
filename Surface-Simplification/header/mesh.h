@@ -51,6 +51,7 @@ public:
 	void createTrianglePlanes(Vector3 &a, Vector3 &b, Vector3 &c);
 	void calculateCost();
 	void edgeContraction();
+	int totalTriangles();
 
 	void createPlane(float size);
 	bool loadOBJ(const char* filename);

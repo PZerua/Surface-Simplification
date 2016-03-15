@@ -42,6 +42,7 @@ public:
 	void init( void );
 	void render( void );
 	void update( double dt );
+	void renderText(const char* text, int length, int x, int y);
 
 	//methods for events
 	void onKeyPressed( SDL_KeyboardEvent event );

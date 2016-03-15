@@ -4,6 +4,9 @@
 #include "camera.h"
 #include "mesh.h"
 #include "shader.h"
+#include <iostream> 
+#include <sstream>   
+#include <string>  
 
 Camera* camera = NULL;
 Mesh* mesh = NULL;
@@ -78,6 +81,17 @@ void Application::render(void)
 	Matrix44 mvp = model_matrix * viewprojection;
 	Matrix44 modelt = model_matrix.getRotationOnly(); 
 	
+	//Render Text
+	std::string text;
+	std::stringstream ss;
+
+	int totalTriangles = mesh->totalTriangles();
+
+
+	ss << "Numero de triangulos:  " << totalTriangles;
+	text = ss.str();
+	renderText(text.data(), text.size(), 15, 10);
+
 	//Phong shader
 	phong->enable();
 	//upload info to the shader
@@ -95,6 +109,31 @@ void Application::render(void)
 
 	//swap between front buffer and back buffer
 	SDL_GL_SwapWindow(this->window);
+}
+
+void Application::renderText(const char* text, int length, int x, int y) {
+
+
+	glColor3f(1.0f, 1.0f, 0.0f); // make this vertex yellow 
+
+	glMatrixMode(GL_PROJECTION);
+	double* matrix = new double[16];
+	glGetDoublev(GL_PROJECTION_MATRIX, matrix);
+	glLoadIdentity();
+	glOrtho(0, 800, 0, 600, -5, 5);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
+	glRasterPos2i(x, y);
+	for (int i = 0; i<length; i++) {
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, (int)text[i]);
+	}
+	glPopMatrix();
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixd(matrix);
+	glMatrixMode(GL_MODELVIEW);
+
 }
 
 //called after render

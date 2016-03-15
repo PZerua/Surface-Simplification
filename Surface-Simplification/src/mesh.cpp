@@ -476,3 +476,11 @@ void Mesh::edgeContraction()
 		edgeQueue.pop();
 	}
 }
+
+int Mesh::totalTriangles()
+{
+	int numVertex;
+	numVertex = vertices.size();
+	int totalTriangles = numVertex / 3;
+	return totalTriangles;
+}
