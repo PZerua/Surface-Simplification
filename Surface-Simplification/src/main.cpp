@@ -14,7 +14,7 @@
 int main(int argc, char **argv)
 {
 	//launch the app (app is a global variable)
-	Application* app = new Application( "My app", 1280, 720 );
+	Application* app = new Application( "My app", 800, 600 );
 	app->init();
 	app->start();
 

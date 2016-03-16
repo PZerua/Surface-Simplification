@@ -52,7 +52,8 @@ public:
 	Matrix44 getTriangleMatrix(unsigned int tri);
 	Matrix44 getTriangleVectorMatrix(std::vector<unsigned int> triangles);
 
-	void calculateCost();
+	void computeAllCosts();
+	void computeCost(Edge *edge);
 	void edgeContraction(unsigned int removeCount);
 	bool loadOBJ(const char* filename);
 };

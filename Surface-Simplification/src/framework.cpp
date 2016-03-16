@@ -598,15 +598,12 @@ Edge::Edge(const unsigned &a, const unsigned &b)
 	this->b = b;
 }
 
-
 bool Edge::operator==(const Edge& p)
 {
-	if (a == p.a)
-		if (b == p.b)
-			return true;
-	if (a == p.b)
-		if (b == p.a)
-			return true;
+	if (a == p.a && b == p.b)
+		return true;
+	if (a == p.b && b == p.a)
+		return true;
 	return false;
 }
 

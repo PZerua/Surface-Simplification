@@ -42,12 +42,8 @@ void Application::init(void)
 
 	//then we load a mesh
 	mesh = new Mesh();
-	mesh->loadOBJ("data/lee.obj");
-	mesh->calculateCost();
-	//mesh->edgeContraction();
-	/*mesh->edgeContraction();
-	mesh->edgeContraction();
-	mesh->edgeContraction();*/
+	mesh->loadOBJ("data/teapot.obj");
+	mesh->computeAllCosts();
 
 	//we load a shader
 	phong = new Shader();
@@ -165,11 +161,7 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 		case SDLK_ESCAPE: exit(0); break; //ESC key, kill the app
 		case SDLK_m:
 			if (event.type == SDL_KEYUP){
-				/*printf ("Enter desired number of triangles: ");
-				scanf ("%d", &t_count);
-				printf ("Triangles: %d", t_count);*/
-				mesh->edgeContraction(5);
-				//TODO: execute surface simplification method
+				mesh->edgeContraction(20);
 			}
 			break;
 		case SDLK_z:

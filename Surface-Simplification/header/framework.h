@@ -250,17 +250,6 @@ inline Vector3u operator * (float v, const Vector3u& c) { return Vector3u((unsig
 float ComputeSignedAngle( Vector2 a, Vector2 b);
 Vector3 RayPlaneCollision( const Vector3& plane_pos, const Vector3& plane_normal, const Vector3& ray_origin, const Vector3& ray_dir );
 
-class Triangle
-{
-public:
-	Triangle(unsigned int i, unsigned int j, unsigned int k);
-
-	unsigned int i,j,k;
-	
-	bool containsIndex(unsigned int a);
-	bool containsIndices(unsigned int a, unsigned int b);
-};
-
 class Edge
 {
 public:
@@ -274,8 +263,19 @@ public:
 	Vector3 w;
 	double cost;
 
+	unsigned int triangleIndex;
 };
 
+class Triangle
+{
+public:
+	Triangle(unsigned int i, unsigned int j, unsigned int k);
+
+	unsigned int i, j, k;
+
+	bool containsIndex(unsigned int a);
+	bool containsIndices(unsigned int a, unsigned int b);
+};
 
 Vector4 multV4xM4(const Vector4 &v, const Matrix44 &m);
 Vector4 multM4xV4(const Matrix44 &m, const Vector4 &v);
