@@ -37,7 +37,7 @@ class Mesh
 {
 public:
 	std::map<Vector3, vector<unsigned int>, customVec3Comparator> vertexTriangles;
-	std::map<Vector3, Matrix44, customVec3Comparator> vertexQ;
+	std::map<Vector3, vector<unsigned int>, customVec3Comparator> vertexEdges;
 	vector<Edge> edges;
 
 	std::vector<Vector3> indexed_positions;
@@ -51,6 +51,9 @@ public:
 
 	Matrix44 getTriangleMatrix(unsigned int tri);
 	Matrix44 getTriangleVectorMatrix(std::vector<unsigned int> triangles);
+
+	void addEdge(unsigned int i, unsigned int j, unsigned int triangleIndex);
+	void updateEdges(unsigned int i);
 
 	void computeAllCosts();
 	void computeCost(Edge *edge);

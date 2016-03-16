@@ -42,8 +42,8 @@ void Application::init(void)
 
 	//then we load a mesh
 	mesh = new Mesh();
-	mesh->loadOBJ("data/teapot.obj");
-	mesh->computeAllCosts();
+	mesh->loadOBJ("data/sphere.obj");
+	//mesh->computeAllCosts();
 
 	//we load a shader
 	phong = new Shader();

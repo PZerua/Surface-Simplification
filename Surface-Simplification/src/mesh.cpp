@@ -124,15 +124,9 @@ bool Mesh::loadOBJ(const char* filename)
 				unsigned int triIndex = this->triangles.size();
 				this->triangles.push_back(tri);
 
-				Edge e1(tri.i, tri.j);
-				e1.triangleIndex = triIndex;
-				edges.push_back(e1);
-				Edge e2(tri.j, tri.k);
-				e2.triangleIndex = triIndex;
-				edges.push_back(e2);
-				Edge e3(tri.k, tri.i);
-				e3.triangleIndex = triIndex;
-				edges.push_back(e3);
+				this->addEdge(tri.i, tri.j, triIndex);
+				this->addEdge(tri.j, tri.k, triIndex);
+				this->addEdge(tri.k, tri.i, triIndex);
 				
 				vector<unsigned int> vecAux;
 				vecAux.push_back(triIndex);
@@ -376,6 +370,7 @@ void Mesh::edgeContraction(unsigned int removeCount)
     int count = 0;
     while (count < removeCount)
     {
+		sort(edges.begin(), edges.end(), LessCost());
 		Edge e = edges[0];
 		edges.erase(edges.begin());
 
@@ -444,44 +439,84 @@ void Mesh::edgeContraction(unsigned int removeCount)
 		auxTriangles.insert(auxTriangles.end(), triB.begin(), triB.end());
 		this->vertexTriangles[this->indexed_positions[e.a]] = auxTriangles;
 		//add the edges of the new triangles and compute the cost
+		//update all edges that may ahve changed cost and w
 		for (int i = 0; i < triA.size(); i++)
 		{
 			Triangle t = this->triangles[triA[i]];
-			Edge e1(t.i, t.j);
-			e1.triangleIndex = triA[i];
-			this->computeCost(&e1);
-			this->edges.push_back(e1);
-			Edge e2(t.j, t.k);
-			e2.triangleIndex = triA[i];
-			this->computeCost(&e2);
-			this->edges.push_back(e2);
-			Edge e3(t.k, t.i);
-			e3.triangleIndex = triA[i];
-			this->computeCost(&e3);
-			this->edges.push_back(e3);
+			this->addEdge(t.i, t.j, triA[i]);
+			this->addEdge(t.j, t.k, triA[i]);
+			this->addEdge(t.k, t.i, triA[i]);
+
+			this->updateEdges(t.i);
+			this->updateEdges(t.j);
+			this->updateEdges(t.k);
 		}
 		for (int i = 0; i < triB.size(); i++)
 		{
 			Triangle t = this->triangles[triB[i]];
-			Edge e1(t.i, t.j);
-			e1.triangleIndex = triB[i];
-			this->computeCost(&e1);
-			this->edges.push_back(e1);
-			Edge e2(t.j, t.k);
-			e2.triangleIndex = triB[i];
-			this->computeCost(&e2);
-			this->edges.push_back(e2);
-			Edge e3(t.k, t.i);
-			e3.triangleIndex = triB[i];
-			this->computeCost(&e3);
-			this->edges.push_back(e3);
+			this->addEdge(t.i, t.j, triB[i]);
+			this->addEdge(t.j, t.k, triB[i]);
+			this->addEdge(t.k, t.i, triB[i]);
+
+			this->updateEdges(t.i);
+			this->updateEdges(t.j);
+			this->updateEdges(t.k);
 		}
-		//this->computeAllCosts();
-		//sort(edges.begin(), edges.end(), LessCost());
 		//finally remove the vertex e.b from the list of vertices
-		//this->indexed_positions.erase(this->indexed_positions.begin() + e.b);
+		this->indexed_positions.erase(this->indexed_positions.begin() + e.b);
+		//update all the indices inside the edges accordingly
+		for (unsigned int i = 0; i < this->edges.size(); i++)
+		{
+			if (this->edges[i].a > e.b) this->edges[i].a -= 1;
+			if (this->edges[i].b > e.b) this->edges[i].b -= 1;
+		}
+		//and inside the triangles as well
+		for (unsigned int i = 0; i < this->triangles.size(); i++)
+		{
+			if (this->triangles[i].i > e.b) this->triangles[i].i -= 1;
+			if (this->triangles[i].j > e.b) this->triangles[i].j -= 1;
+			if (this->triangles[i].k > e.b) this->triangles[i].k -= 1;
+		}
         count++;
     }
 
 	cout << "Finished edgeContraction!" << endl;
+}
+
+void Mesh::addEdge(unsigned int i, unsigned int j, unsigned int triangleIndex)
+{
+	Edge e1(i, j);
+	e1.triangleIndex = triangleIndex;
+	this->computeCost(&e1);
+	edges.push_back(e1);
+
+	Vector3 vi = this->indexed_positions[i];
+	Vector3 vj = this->indexed_positions[j];
+
+	vector<unsigned int> vecAux1;
+	vecAux1.push_back(edges.size() - 1);
+	if (this->vertexEdges.find(vi) != this->vertexEdges.end())
+		this->vertexEdges[vi] = vecAux1;
+	else this->vertexEdges[vi].push_back(edges.size() - 1);
+
+	vector<unsigned int> vecAux2;
+	vecAux2.push_back(edges.size() - 1);
+	if (this->vertexEdges.find(vj) != this->vertexEdges.end())
+		this->vertexEdges[vj] = vecAux2;
+	else this->vertexEdges[vj].push_back(edges.size() - 1);
+}
+
+
+void Mesh::updateEdges(unsigned int i)
+{
+	Vector3 vec = this->indexed_positions[i];
+	if (this->vertexEdges.find(vec) != this->vertexEdges.end())
+	{
+		vector<unsigned int> edgeIndices = this->vertexEdges[vec];
+		for (unsigned int i = 0; i < edgeIndices.size(); i++)
+		{
+			Edge e = this->edges[edgeIndices[i]];
+			this->computeCost(&e);
+		}
+	}
 }
