@@ -44,7 +44,7 @@ void Application::init(void)
 
 	//then we load a mesh
 	mesh = new Mesh();
-	mesh->loadOBJ("data/sphere.obj");
+	mesh->loadOBJ("data/lee.obj");
 
 	//we load a shader
 	phong = new Shader();
@@ -179,7 +179,7 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 	switch(event.keysym.sym)
 	{
 		case SDLK_ESCAPE: exit(0); break; //ESC key, kill the app
-		case SDLK_n:
+		case SDLK_m:
 			if (event.type == SDL_KEYUP) {
 				int triangles;
 				cout << "Number of triangles after contraction: " << endl;
