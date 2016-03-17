@@ -20,7 +20,7 @@ void Mesh::clear()
 	indexed_positions.clear();
 }
 
-void Mesh::render(int primitive)
+void Mesh::render(const int &primitive)
 {
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -33,7 +33,7 @@ void Mesh::render(int primitive)
 	if (indexed_normals.size())
 	{
 		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, 0, &indexed_normals[0] );
+		glNormalPointer(GL_FLOAT, 0, &indexed_normalsFinal[0]);
 	}
 
 	//glDrawArrays(primitive, 0, vertices.size() );
@@ -115,10 +115,20 @@ bool Mesh::loadOBJ(const char* filename)
 			Vector3 v1,v2,v3;
 			v1 = parseVector3( tokens[1].c_str(), '/' );
 
+			if (!indexed_normalsFinal.size())
+				indexed_normalsFinal.assign(indexed_normals.size(), Vector3(0, 0, 0));
+
 			for (unsigned iPoly = 2; iPoly < tokens.size() - 1; iPoly++)
 			{
 				v2 = parseVector3( tokens[iPoly].c_str(), '/' );
 				v3 = parseVector3( tokens[iPoly+1].c_str(), '/' );
+
+				if (indexed_normalsFinal.size())
+				{
+					indexed_normalsFinal[v1.x - 1] = indexed_normals[v1.z - 1];
+					indexed_normalsFinal[v2.x - 1] = indexed_normals[v2.z - 1];
+					indexed_normalsFinal[v3.x - 1] = indexed_normals[v3.z - 1];
+				}
 
 				Triangle tri(unsigned int(v1.x) - 1, unsigned int(v2.x) - 1, unsigned int(v3.x) - 1);
 				unsigned int triIndex = this->triangles.size();
@@ -273,7 +283,7 @@ Vector3 parseVector3(const char* text, const char separator)
 	return result;
 };
 
-Matrix44 Mesh::getTriangleMatrix(unsigned int index)
+Matrix44 Mesh::getTriangleMatrix(const unsigned int &index)
 {
 	Triangle tri = this->triangles[index];
 	Vector3 a = this->indexed_positions[tri.i];
@@ -315,21 +325,21 @@ Matrix44 Mesh::getTriangleMatrix(unsigned int index)
 
 Matrix44 Mesh::getTriangleVectorMatrix(std::vector<unsigned int> indices)
 {
-	Matrix44 K;
+	Matrix44 Q;
 
 	//cout << "Triangles: " << indices.size() << endl;
 	
 	if(indices.size() > 0)
 	{
-		K = this->getTriangleMatrix(indices[0]);
+		Q = this->getTriangleMatrix(indices[0]);
 		for (unsigned int i = 1; i < indices.size(); ++i)
 		{
 			//cout << "\tTriangle: " << indices[i] << endl;
-			K = K + this->getTriangleMatrix(indices[i]);
+			Q = Q + this->getTriangleMatrix(indices[i]);
 		}
 	}
 
-	return K;
+	return Q;
 }
 
 void Mesh::computeAllCosts()
@@ -365,125 +375,133 @@ void Mesh::computeCost(Edge *edge)
 	edge->cost = wQ.dot(tempW);
 }
 
-void Mesh::edgeContraction(unsigned int removeCount)
+void Mesh::edgeContraction(const unsigned &numTriang)
 {
-    int count = 0;
-    while (count < removeCount)
-    {
-		sort(edges.begin(), edges.end(), LessCost());
-		Edge e = edges[0];
-		edges.erase(edges.begin());
 
-		vector<unsigned int> triA = this->vertexTriangles[this->indexed_positions[e.a]];
-		vector<unsigned int> triB = this->vertexTriangles[this->indexed_positions[e.b]];
-		//remove all the edges affected by the change
-		for (unsigned i = 0; i < edges.size(); i++)
+	unsigned triangSize = triangles.size();
+	int rest = triangSize - numTriang;
+	if (rest > 0)
+	{
+		int count = 0;
+		while (count < ((rest) / 2))
 		{
-			if ((std::find(triA.begin(), triA.end(), edges[i].triangleIndex) != triA.end())
-				|| (std::find(triB.begin(), triB.end(), edges[i].triangleIndex) != triB.end()))
+			sort(edges.begin(), edges.end(), LessCost());
+			Edge e = edges[0];
+			edges.erase(edges.begin());
+
+			vector<unsigned int> triA = this->vertexTriangles[this->indexed_positions[e.a]];
+			vector<unsigned int> triB = this->vertexTriangles[this->indexed_positions[e.b]];
+			//remove all the edges affected by the change
+			for (unsigned i = 0; i < edges.size(); i++)
 			{
-				this->edges.erase(this->edges.begin() + i);
-				i -= 1;
-			}
-		}
-		cout << "Removing triangles of the edge... " << e.a << " - " << e.b << endl;
-		//we remove the triangles containing the edge from triA
-		for(int i = 0; i < triA.size();i++)
-		{
-			Triangle tri = this->triangles[triA[i]];
-			//cout << "\tTriangle: " << tri.i << ", " << tri.j << ", " << tri.k << endl;
-			if(tri.containsIndex(e.b))
-			{
-				this->triangles.erase(this->triangles.begin() + triA[i]);
-				for (unsigned j = 0; j < edges.size(); j++)
+				if ((std::find(triA.begin(), triA.end(), edges[i].triangleIndex) != triA.end())
+					|| (std::find(triB.begin(), triB.end(), edges[i].triangleIndex) != triB.end()))
 				{
-					if (edges[j].triangleIndex > triA[i])
-						edges[j].triangleIndex -= 1;
+					this->edges.erase(this->edges.begin() + i);
+					i -= 1;
 				}
-				cout << "\t\tDestroy: " << triA[i] << endl;
-				this->vertexTriangles[this->indexed_positions[e.a]].erase(
-					this->vertexTriangles[this->indexed_positions[e.a]].begin() + i);
-				std::map<Vector3, vector<unsigned int>>::iterator it;
-				for (it = this->vertexTriangles.begin(); it != this->vertexTriangles.end(); ++it)
+			}
+			cout << "Removing triangles of the edge... " << e.a << " - " << e.b << endl;
+			//we remove the triangles containing the edge from triA
+			for (unsigned i = 0; i < triA.size(); i++)
+			{
+				Triangle tri = this->triangles[triA[i]];
+				//cout << "\tTriangle: " << tri.i << ", " << tri.j << ", " << tri.k << endl;
+				if (tri.containsIndex(e.b))
 				{
-					for (int j = 0; j < it->second.size(); j++)
+					this->triangles.erase(this->triangles.begin() + triA[i]);
+					for (unsigned j = 0; j < edges.size(); j++)
 					{
-						if (it->second[j] == triA[i])
-							it->second.erase(it->second.begin() + (j--));
-						else if (it->second[j] > triA[i])
-							it->second[j] -= 1;
+						if (edges[j].triangleIndex > triA[i])
+							edges[j].triangleIndex -= 1;
 					}
+					cout << "\t\tDestroy: " << triA[i] << endl;
+					this->vertexTriangles[this->indexed_positions[e.a]].erase(
+						this->vertexTriangles[this->indexed_positions[e.a]].begin() + i);
+					std::map<Vector3, vector<unsigned int>>::iterator it;
+					for (it = this->vertexTriangles.begin(); it != this->vertexTriangles.end(); ++it)
+					{
+						for (unsigned j = 0; j < it->second.size(); j++)
+						{
+							if (it->second[j] == triA[i])
+								it->second.erase(it->second.begin() + (j--));
+							else if (it->second[j] > triA[i])
+								it->second[j] -= 1;
+						}
+					}
+					triA = this->vertexTriangles[this->indexed_positions[e.a]];
+					//triB = this->vertexTriangles[e.b];
+					i -= 1;
 				}
-				triA = this->vertexTriangles[this->indexed_positions[e.a]];
-				//triB = this->vertexTriangles[e.b];
-				i -= 1;
 			}
-		}
-		//refresh both vectors to get the new indices
-		triA = this->vertexTriangles[this->indexed_positions[e.a]];
-		triB = this->vertexTriangles[this->indexed_positions[e.b]];
-		//e.a is now the new vertex w
-		this->indexed_positions[e.a] = e.w;
-		//this->indexed_positions[e.b] = e.w;
-		//replace all indices of e.b for e.a
-		for (int i = 0; i < triB.size(); i++)
-		{
-			Triangle tri = this->triangles[triB[i]];
-			if (tri.i == e.b) this->triangles[triB[i]].i = e.a;
-			if (tri.j == e.b) this->triangles[triB[i]].j = e.a;
-			if (tri.k == e.b) this->triangles[triB[i]].k = e.a;
-		}
-		//add the triangles of the new vertex
-		vector<unsigned int> auxTriangles;
-		auxTriangles.insert(auxTriangles.end(), triA.begin(), triA.end());
-		auxTriangles.insert(auxTriangles.end(), triB.begin(), triB.end());
-		this->vertexTriangles[this->indexed_positions[e.a]] = auxTriangles;
-		//add the edges of the new triangles and compute the cost
-		//update all edges that may ahve changed cost and w
-		for (int i = 0; i < triA.size(); i++)
-		{
-			Triangle t = this->triangles[triA[i]];
-			this->addEdge(t.i, t.j, triA[i]);
-			this->addEdge(t.j, t.k, triA[i]);
-			this->addEdge(t.k, t.i, triA[i]);
+			//refresh both vectors to get the new indices
+			triA = this->vertexTriangles[this->indexed_positions[e.a]];
+			triB = this->vertexTriangles[this->indexed_positions[e.b]];
+			//e.a is now the new vertex w
+			this->indexed_positions[e.a] = e.w;
+			//this->indexed_positions[e.b] = e.w;
+			//replace all indices of e.b for e.a
+			for (unsigned i = 0; i < triB.size(); i++)
+			{
+				Triangle tri = this->triangles[triB[i]];
+				if (tri.i == e.b) this->triangles[triB[i]].i = e.a;
+				if (tri.j == e.b) this->triangles[triB[i]].j = e.a;
+				if (tri.k == e.b) this->triangles[triB[i]].k = e.a;
+			}
+			//add the triangles of the new vertex
+			vector<unsigned int> auxTriangles;
+			auxTriangles.insert(auxTriangles.end(), triA.begin(), triA.end());
+			auxTriangles.insert(auxTriangles.end(), triB.begin(), triB.end());
+			this->vertexTriangles[this->indexed_positions[e.a]] = auxTriangles;
+			//add the edges of the new triangles and compute the cost
+			//update all edges that may ahve changed cost and w
+			for (unsigned i = 0; i < triA.size(); i++)
+			{
+				Triangle t = this->triangles[triA[i]];
+				this->addEdge(t.i, t.j, triA[i]);
+				this->addEdge(t.j, t.k, triA[i]);
+				this->addEdge(t.k, t.i, triA[i]);
 
-			this->updateEdges(t.i);
-			this->updateEdges(t.j);
-			this->updateEdges(t.k);
-		}
-		for (int i = 0; i < triB.size(); i++)
-		{
-			Triangle t = this->triangles[triB[i]];
-			this->addEdge(t.i, t.j, triB[i]);
-			this->addEdge(t.j, t.k, triB[i]);
-			this->addEdge(t.k, t.i, triB[i]);
+				this->updateEdges(t.i);
+				this->updateEdges(t.j);
+				this->updateEdges(t.k);
+			}
+			for (unsigned i = 0; i < triB.size(); i++)
+			{
+				Triangle t = this->triangles[triB[i]];
+				this->addEdge(t.i, t.j, triB[i]);
+				this->addEdge(t.j, t.k, triB[i]);
+				this->addEdge(t.k, t.i, triB[i]);
 
-			this->updateEdges(t.i);
-			this->updateEdges(t.j);
-			this->updateEdges(t.k);
+				this->updateEdges(t.i);
+				this->updateEdges(t.j);
+				this->updateEdges(t.k);
+			}
+			//finally remove the vertex e.b from the list of vertices
+			this->indexed_positions.erase(this->indexed_positions.begin() + e.b);
+			this->indexed_normalsFinal.erase(this->indexed_normalsFinal.begin() + e.b);
+			//update all the indices inside the edges accordingly
+			for (unsigned int i = 0; i < this->edges.size(); i++)
+			{
+				if (this->edges[i].a > e.b) this->edges[i].a -= 1;
+				if (this->edges[i].b > e.b) this->edges[i].b -= 1;
+			}
+			//and inside the triangles as well
+			for (unsigned int i = 0; i < this->triangles.size(); i++)
+			{
+				if (this->triangles[i].i > e.b) this->triangles[i].i -= 1;
+				if (this->triangles[i].j > e.b) this->triangles[i].j -= 1;
+				if (this->triangles[i].k > e.b) this->triangles[i].k -= 1;
+			}
+			count++;
 		}
-		//finally remove the vertex e.b from the list of vertices
-		this->indexed_positions.erase(this->indexed_positions.begin() + e.b);
-		//update all the indices inside the edges accordingly
-		for (unsigned int i = 0; i < this->edges.size(); i++)
-		{
-			if (this->edges[i].a > e.b) this->edges[i].a -= 1;
-			if (this->edges[i].b > e.b) this->edges[i].b -= 1;
-		}
-		//and inside the triangles as well
-		for (unsigned int i = 0; i < this->triangles.size(); i++)
-		{
-			if (this->triangles[i].i > e.b) this->triangles[i].i -= 1;
-			if (this->triangles[i].j > e.b) this->triangles[i].j -= 1;
-			if (this->triangles[i].k > e.b) this->triangles[i].k -= 1;
-		}
-        count++;
-    }
 
-	cout << "Finished edgeContraction!" << endl;
+		cout << "Finished edgeContraction!" << endl;
+	}
+	else cout << "Can't do a contraction to " << numTriang << " triangles, the resultant mesh would have less than 0 triangles" << endl;
 }
 
-void Mesh::addEdge(unsigned int i, unsigned int j, unsigned int triangleIndex)
+void Mesh::addEdge(const unsigned int &i, const unsigned int &j, const unsigned int &triangleIndex)
 {
 	Edge e1(i, j);
 	e1.triangleIndex = triangleIndex;
@@ -506,8 +524,7 @@ void Mesh::addEdge(unsigned int i, unsigned int j, unsigned int triangleIndex)
 	else this->vertexEdges[vj].push_back(edges.size() - 1);
 }
 
-
-void Mesh::updateEdges(unsigned int i)
+void Mesh::updateEdges(const unsigned int &i)
 {
 	Vector3 vec = this->indexed_positions[i];
 	if (this->vertexEdges.find(vec) != this->vertexEdges.end())
@@ -519,4 +536,9 @@ void Mesh::updateEdges(unsigned int i)
 			this->computeCost(&e);
 		}
 	}
+}
+
+int Mesh::totalTriangles()
+{
+	return triangles.size();
 }

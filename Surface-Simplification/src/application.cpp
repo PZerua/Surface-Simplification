@@ -10,6 +10,8 @@ Mesh* mesh = NULL;
 Matrix44 model_matrix;
 Shader* phong = NULL;
 
+float vel = 0.05;
+
 Application::Application(const char* caption, int width, int height)
 {
 	this->window = createWindow(caption, width, height);
@@ -43,7 +45,6 @@ void Application::init(void)
 	//then we load a mesh
 	mesh = new Mesh();
 	mesh->loadOBJ("data/sphere.obj");
-	//mesh->computeAllCosts();
 
 	//we load a shader
 	phong = new Shader();
@@ -62,6 +63,14 @@ void Application::render(void)
 	Matrix44 viewprojection = camera->getViewProjectionMatrix();
 	Matrix44 mvp = model_matrix * viewprojection;
 	Matrix44 modelt = model_matrix.getRotationOnly(); 
+
+	//Render Text
+	std::string text;
+
+	int totalTriangles = mesh->totalTriangles();
+
+	text = "Numero de triangulos:  " + to_string(totalTriangles);
+	drawString(text.c_str());
 	
 	//Phong shader
 	phong->enable();
@@ -81,6 +90,18 @@ void Application::render(void)
 	//swap between front buffer and back buffer
 	SDL_GL_SwapWindow(this->window);
 }
+
+void Application::drawString(const char *s)
+{
+	int i, len;
+	glRasterPos2f(-36, -18);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	len = strlen(s);
+	for (i = 0; i < len; i++)
+	{
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, s[i]);
+	}
+};
 
 //called after render
 void Application::update(double seconds_elapsed)
@@ -103,53 +124,52 @@ void Application::update(double seconds_elapsed)
 	}
 	if (keystate[SDL_SCANCODE_RIGHT])
 	{
-		model_matrix.traslateLocal(1, 0, 0);
+		model_matrix.traslateLocal(vel, 0, 0);
 	}
 	if (keystate[SDL_SCANCODE_LEFT])
 	{
-		model_matrix.traslateLocal(-1, 0, 0);
+		model_matrix.traslateLocal(-vel, 0, 0);
 	}
 	if (keystate[SDL_SCANCODE_UP])
 	{
-		model_matrix.traslateLocal(0, 1, 0);
+		model_matrix.traslateLocal(0, vel, 0);
 	}
 	if (keystate[SDL_SCANCODE_DOWN])
 	{
-		model_matrix.traslateLocal(0, -1, 0);
+		model_matrix.traslateLocal(0, -vel, 0);
 	}
 	if (keystate[SDL_SCANCODE_KP_PLUS])
 	{
-		model_matrix.traslateLocal(0, 0, 1);
+		model_matrix.traslateLocal(0, 0, vel);
 	}
 	if (keystate[SDL_SCANCODE_KP_MINUS])
 	{
-		model_matrix.traslateLocal(0, 0, -1);
+		model_matrix.traslateLocal(0, 0, -vel);
 	}
 	if (keystate[SDL_SCANCODE_I])
 	{
-		light.set(light.x, light.y + 1, light.z);
+		light.set(light.x, light.y + vel, light.z);
 	}
 	if (keystate[SDL_SCANCODE_K])
 	{
-		light.set(light.x, light.y - 1, light.z);
+		light.set(light.x, light.y - vel, light.z);
 	}
 	if (keystate[SDL_SCANCODE_J])
 	{
-		light.set(light.x - 1, light.y, light.z);
+		light.set(light.x - vel, light.y, light.z);
 	}
 	if (keystate[SDL_SCANCODE_L])
 	{
-		light.set(light.x + 1, light.y, light.z);
+		light.set(light.x + vel, light.y, light.z);
 	}
 	if (keystate[SDL_SCANCODE_H])
 	{
-		light.set(light.x, light.y, light.z - 1);
+		light.set(light.x, light.y, light.z - vel);
 	}
 	if (keystate[SDL_SCANCODE_U])
 	{
-		light.set(light.x, light.y, light.z + 1);
+		light.set(light.x, light.y, light.z + vel);
 	}
-
 }
 
 //keyboard press event 
@@ -159,9 +179,14 @@ void Application::onKeyPressed( SDL_KeyboardEvent event )
 	switch(event.keysym.sym)
 	{
 		case SDLK_ESCAPE: exit(0); break; //ESC key, kill the app
-		case SDLK_m:
-			if (event.type == SDL_KEYUP){
-				mesh->edgeContraction(20);
+		case SDLK_n:
+			if (event.type == SDL_KEYUP) {
+				int triangles;
+				cout << "Number of triangles after contraction: " << endl;
+				cin >> triangles;
+				if (triangles > 0)
+					mesh->edgeContraction((unsigned)triangles);
+				else cout << "Input can't be negative" << endl;
 			}
 			break;
 		case SDLK_z:

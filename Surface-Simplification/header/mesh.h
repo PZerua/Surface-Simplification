@@ -42,22 +42,24 @@ public:
 
 	std::vector<Vector3> indexed_positions;
 	std::vector<Vector3> indexed_normals;
+	std::vector<Vector3> indexed_normalsFinal;
 	std::vector<Vector2> indexed_uvs;
 	std::vector<Triangle> triangles;
 
 	Mesh();
 	void clear();
-	void render(int primitive);
+	void render(const int &primitive);
 
-	Matrix44 getTriangleMatrix(unsigned int tri);
+	Matrix44 getTriangleMatrix(const unsigned int &tri);
 	Matrix44 getTriangleVectorMatrix(std::vector<unsigned int> triangles);
 
-	void addEdge(unsigned int i, unsigned int j, unsigned int triangleIndex);
-	void updateEdges(unsigned int i);
+	void addEdge(const unsigned int &i, const unsigned int &j, const unsigned int &triangleIndex);
+	void updateEdges(const unsigned int &i);
+	int totalTriangles();
 
 	void computeAllCosts();
 	void computeCost(Edge *edge);
-	void edgeContraction(unsigned int removeCount);
+	void edgeContraction(const unsigned &numTriang);
 	bool loadOBJ(const char* filename);
 };
 

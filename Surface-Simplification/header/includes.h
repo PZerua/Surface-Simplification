@@ -30,6 +30,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <string>
 
 //OpenGL
 //#include <GL/glu.h> //including GLUT we include everything (opengl, glu and glut)

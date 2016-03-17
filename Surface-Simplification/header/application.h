@@ -42,6 +42,7 @@ public:
 	void init( void );
 	void render( void );
 	void update( double dt );
+	void drawString(const char *s);
 
 	//methods for events
 	void onKeyPressed( SDL_KeyboardEvent event );
